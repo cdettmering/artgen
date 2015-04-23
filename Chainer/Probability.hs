@@ -88,30 +88,31 @@ padList size lst = lst ++ (take (size - (length lst)) (cycle [last lst]))
  - pick for a more detailed explanation.
 -}
 pickList :: Ord a => Probability a -> [a]
-pickList p = padList 100 (foldr (\x acc -> (pickSubList x (probability x p)) ++ acc) [] (M.keys p))
+pickList p = padList 500 (foldr (\x acc -> (pickSubList x (probability x p)) ++ acc) [] (M.keys p))
 
 {-
  - Generates a pick sub list for a specific element. These sub lists are then
  - concat'd together to create the final list.
 -}
 pickSubList :: a -> Float -> [a]
-pickSubList a p = let numElements = (floor (p * 100)) in take numElements (cycle [a])
+pickSubList a p = let numElements = (floor (p * 500)) in take numElements (cycle [a])
 
 {-
  - Picks a random element from the list
 -}
 pickFromList :: R.RandomGen g => [a] -> g -> (a, g)
-pickFromList lst gen  = let (a, g) = R.randomR (0, 99) gen in (lst !! a, g)
+pickFromList lst gen  = let (a, g) = R.randomR (0, 499) gen in (lst !! a, g)
 
 {-
  - Picks a random value from the Probability based off of each values
  - probability to be picked. This is done through a "pick list". The list
- - consists of 100 elements, with each value in the Probability taking up
+ - consists of 500 elements, with each value in the Probability taking up
  - the probability equivalent number of elements in the list. Then a random
  - element from the list is chosen.
  -
  - For example: If the probability contain the values: 1 -> 10%, 2 -> 15%, 3 -> 75%
- - then the pick list will contain 10 1's, 15 2's and 75 3's.
+ - then the pick list will contain 50 1's, 75 2's and 375 3's. This support a
+ - probability resolution down to .03%
 -}
 pick :: (Ord a, R.RandomGen g) => Probability a -> g -> (a, g)
 pick p g = pickFromList (pickList p) g
