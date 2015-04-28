@@ -66,6 +66,12 @@ isSpecial c = c == '*' ||
               c == '#' ||
               c == '@'
 
+isUpper :: T.Text -> Bool
+isUpper t = T.all CH.isUpper t
+
+filterAllCaps :: [T.Text] -> [T.Text]
+filterAllCaps t = filter (not . isUpper) t
+
 filterSpecial :: T.Text -> T.Text
 filterSpecial t = T.filter (not . isSpecial) t
 
@@ -118,7 +124,7 @@ main = do
            let !t = map (filterSpecial . filterNonPrintable . T.strip . T.pack) tList
 
            -- Split into words
-           let !words = foldr (\x acc -> ((separatePunctuation . T.words) x) : acc) [[]] t
+           let !words = foldr (\x acc -> ((filterAllCaps . separatePunctuation . T.words) x) : acc) [[]] t
 
            -- Run the chain algorithm
            !chain <- C.fromListListIO words
