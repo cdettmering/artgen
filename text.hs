@@ -30,6 +30,7 @@ import qualified Data.Text as T
 import qualified Chainer.Chain as C
 import qualified Chainer.ProbabilityMap as P
 import qualified System.Environment as E
+import qualified System.Directory as D
 
 {-
  - Filters out non printable characters
@@ -56,7 +57,17 @@ isPunctuation c = c == '.' ||
                   c == ';' ||
                   c == ':' ||
                   c == '!' ||
-                  c == '?'
+                  c == '?' ||
+                  c == '\"' ||
+                  c == '\''
+
+isSpecial :: Char -> Bool
+isSpecial c = c == '*' ||
+              c == '#' ||
+              c == '@'
+
+filterSpecial :: T.Text -> T.Text
+filterSpecial t = T.filter (not . isSpecial) t
 
 {-
  - Separates punctuation into their own words
@@ -68,21 +79,49 @@ separatePunctuation (t:ts) = if (isPunctuation (T.last t)) then
                              else
                                 t : (separatePunctuation ts)
 
+{-
+ - Merges any Char satisfying the predicate to the left
+-}
+merge:: (Char -> Bool) -> [T.Text] -> [T.Text]
+merge _ [] = []
+merge f (t:p:ts) = if (T.length p) == 1 then
+                       -- This is a char
+                       if (f (head (T.unpack p))) then
+                           -- Predicate found merge it
+                           (T.append t p) : (merge f ts)
+                       else
+                           t : p : (merge f ts)
+                   else
+                       t : p : (merge f ts)
+
+mergePunctuation :: [T.Text] -> [T.Text]
+mergePunctuation t = merge isPunctuation t
+
+
 main :: IO ()
 main = do
             -- Program takes 2 command line arguments:
-            -- 1) The input file (must be plain text)
+            -- 1) The input directory that contains the input files (input files must be plain text)
             -- 2) The output file name
            (input:output:args) <- E.getArgs
 
+           -- Get all directory contents filter . and ..
+           !d <- fmap (filter (\x -> not (x == "." || x == ".."))) (D.getDirectoryContents input)
+
+           -- Append input directory with contents
+           let !files = map (input ++) d
+
+           -- Read each file
+           !tList <- mapM readFile files
+
            -- Pack into text, strip out leading and trailing whitespace, and then filter out non printable characters
-           !t <- fmap (filterNonPrintable . T.strip . T.pack) (readFile input)
+           let !t = map (filterSpecial . filterNonPrintable . T.strip . T.pack) tList
 
            -- Split into words
-           let !words = (separatePunctuation . T.words) t
+           let !words = foldr (\x acc -> ((separatePunctuation . T.words) x) : acc) [[]] t
 
            -- Run the chain algorithm
-           !chain <- C.fromListIO words
+           !chain <- C.fromListListIO words
 
            -- Merge back into a single string
            let !finalText = (T.unpack . T.unwords . (addNewLines 0 15)) chain

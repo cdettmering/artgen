@@ -48,6 +48,12 @@ fromHistogramMap :: Ord a => H.HistogramMap a -> ProbabilityMap a
 fromHistogramMap h = foldr (\hKey hAcc -> (let histogram = H.histogram hKey  h in 
                                               let probability = P.fromHistogram histogram in
                                                   adjustOrInsert (\p -> P.add hKey histogram probability) hKey hAcc)) empty (M.keys h)
+
+{-
+ - Merges 2 ProbabilityMap's together
+-}
+merge :: Ord a => ProbabilityMap a -> ProbabilityMap a -> ProbabilityMap a
+merge p1 p2 = M.unionWith (\x1 x2 -> P.merge x1 x2) p1 p2
                              
 {-
  - Inserts k into the ProbabilityMap if it doesn't exist, otherwise adjusts

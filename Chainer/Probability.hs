@@ -30,6 +30,9 @@ import System.IO.Unsafe as X
 -- Maps an element to the probability of that element occurring next.
 type Probability a = M.Map a Float
 
+-- Lower and upper probability bounds
+data Bounded a = Bounded {ord :: a, lower :: Float, upper :: Float}
+
 {-
  - Creates an empty Probability
 -}
@@ -41,6 +44,12 @@ empty = M.empty :: M.Map a Float
 -}
 fromHistogram :: Ord a => H.Histogram a -> Probability a
 fromHistogram h = foldr (\x acc -> add x h acc) empty (M.keys h)
+
+{-
+ - Merges 2 Probability's together
+-}
+merge :: Ord a => Probability a -> Probability a -> Probability a
+merge p1 p2 = M.unionWith (+) p1 p2
 
 {-
  - Adds a value to the Probability, or adjust the value

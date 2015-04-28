@@ -45,6 +45,27 @@ fromList :: (Ord a, R.RandomGen g) => [a] -> a -> g -> [a]
 fromList lst s g = let p = (P.fromList lst) in take (length lst) (chain s p g)
 
 {-
+ - Gives back a Marchov Chained list generated form the source list list.
+ - This function will merge the ProbabilityMap's of each input list and 
+ - then generate the output
+-}
+fromListListIO :: (Ord a) => [[a]] -> IO [a]
+fromListListIO lst = do
+                         g <- R.newStdGen
+                         let (s, gen) = startListList lst g
+                         let c = fromListList lst s gen
+                         return $ c
+
+{-
+ - Takes in multiple inputs and merges them together into 1 chained output
+-}
+fromListList :: (Ord a, R.RandomGen g) => [[a]] -> a -> g -> [a]
+fromListList lst s g = let p = (foldr (\x acc -> P.merge (P.fromList x) acc) P.empty lst) in take (sumLength lst) (chain s p g)
+
+sumLength :: [[a]] -> Int
+sumLength lst = foldr (\x acc -> (length x) + acc) 0 lst
+
+{-
  - Generates an infinite Marchov Chain based off of the supplied probability map
  - and seed.
 -}
@@ -56,6 +77,12 @@ chain seed p gen =  let (a, g) = (next seed p gen) in seed : (chain a p g)
 -}
 next :: (Ord a, R.RandomGen g) => a -> P.ProbabilityMap a -> g -> (a, g)
 next a p g = P.pick a p g
+
+{-
+ - Picks random starting seed given a list list
+-}
+startListList :: (Ord a, R.RandomGen g) => [[a]] -> g -> (a, g)
+startListList lst gen = let s = (foldr (++) [] lst) in start s gen
 
 {-
  - Picks a random starting seed

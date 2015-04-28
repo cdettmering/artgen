@@ -43,6 +43,12 @@ fromList (x:[]) = empty
 fromList (x:y:z) = adjustOrInsert (\h -> H.add y h) x (fromList (y:z))
 
 {-
+ - Merges 2 HistogramMaps together
+-}
+merge :: Ord a => HistogramMap a -> HistogramMap a -> HistogramMap a
+merge h1 h2 = M.unionWith (\x1 x2 -> H.merge x1 x2) h1 h2
+
+{-
  - Inserts k into the HistogramMap if it doesn't exist, otherwise adjusts
  - the value of k by applying f to it.
 -}

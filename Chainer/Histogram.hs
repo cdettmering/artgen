@@ -39,6 +39,12 @@ fromList :: Ord a => [a] -> Histogram a
 fromList lst = foldr (\x acc -> add x acc) empty lst
 
 {-
+ - Merges 2 Histograms together adding their occurrences
+-}
+merge :: Ord a => Histogram a -> Histogram a -> Histogram a
+merge h1 h2 = M.unionWith (+) h1 h2
+
+{-
  - Adds a value to the Histogram, or adjust the value
  - +1 if it already exists in the Histogram
 -}
