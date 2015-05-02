@@ -60,10 +60,13 @@ fromListListIO lst = do
  - Takes in multiple inputs and merges them together into 1 chained output
 -}
 fromListList :: (Ord a, R.RandomGen g) => [[a]] -> a -> g -> [a]
-fromListList lst s g = let p = (foldr (\x acc -> P.merge (P.fromList x) acc) P.empty lst) in take (sumLength lst) (chain s p g)
+fromListList lst s g = let p = (foldr (\x acc -> P.merge (P.fromList x) acc) P.empty lst) in take (averageLength lst) (chain s p g)
 
 sumLength :: [[a]] -> Int
 sumLength lst = foldr (\x acc -> (length x) + acc) 0 lst
+
+averageLength :: [[a]] -> Int
+averageLength lst = quot (sumLength lst) (length lst)
 
 {-
  - Generates an infinite Marchov Chain based off of the supplied probability map
