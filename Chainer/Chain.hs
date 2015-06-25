@@ -21,10 +21,8 @@ Authors:
 -}
 
 module Chainer.Chain where
-import qualified Chainer.ProbabilityMap as P
-import qualified Data.Map as M
-import qualified Data.List as L
-import qualified System.Random as R
+import qualified Chainer.ProbabilityMap as ProbabilityMap
+import qualified System.Random as Random
 
 {-
  - Gives back a Marchov Chained list generated from the source list
@@ -32,7 +30,7 @@ import qualified System.Random as R
 -}
 fromListIO :: (Ord a) => [a] -> IO [a]
 fromListIO lst = do
-                     g <- R.newStdGen
+                     g <- Random.newStdGen
                      let (s, gen) = start lst g
                      let c = fromList lst s gen
                      return $ c
@@ -41,8 +39,8 @@ fromListIO lst = do
  - Same as fromListIO except the seed and random number generator must
  - be supplied
 -}
-fromList :: (Ord a, R.RandomGen g) => [a] -> a -> g -> [a]
-fromList lst s g = let p = (P.fromList lst) in take (length lst) (chain s p g)
+fromList :: (Ord a, Random.RandomGen g) => [a] -> a -> g -> [a]
+fromList lst s g = let p = (ProbabilityMap.fromList lst) in take (length lst) (chain s p g)
 
 {-
  - Gives back a Marchov Chained list generated form the source list list.
@@ -51,7 +49,7 @@ fromList lst s g = let p = (P.fromList lst) in take (length lst) (chain s p g)
 -}
 fromListListIO :: (Ord a) => [[a]] -> IO [a]
 fromListListIO lst = do
-                         g <- R.newStdGen
+                         g <- Random.newStdGen
                          let (s, gen) = startListList lst g
                          let c = fromListList lst s gen
                          return $ c
@@ -59,8 +57,8 @@ fromListListIO lst = do
 {-
  - Takes in multiple inputs and merges them together into 1 chained output
 -}
-fromListList :: (Ord a, R.RandomGen g) => [[a]] -> a -> g -> [a]
-fromListList lst s g = let p = (foldr (\x acc -> P.merge (P.fromList x) acc) P.empty lst) in take (averageLength lst) (chain s p g)
+fromListList :: (Ord a, Random.RandomGen g) => [[a]] -> a -> g -> [a]
+fromListList lst s g = let p = (foldr (\x acc -> ProbabilityMap.merge (ProbabilityMap.fromList x) acc) ProbabilityMap.empty lst) in take (averageLength lst) (chain s p g)
 
 sumLength :: [[a]] -> Int
 sumLength lst = foldr (\x acc -> (length x) + acc) 0 lst
@@ -72,23 +70,23 @@ averageLength lst = quot (sumLength lst) (length lst)
  - Generates an infinite Marchov Chain based off of the supplied probability map
  - and seed.
 -}
-chain :: (Ord a, R.RandomGen g) => a -> P.ProbabilityMap a -> g -> [a]
+chain :: (Ord a, Random.RandomGen g) => a -> ProbabilityMap.ProbabilityMap a -> g -> [a]
 chain seed p gen =  let (a, g) = (next seed p gen) in seed : (chain a p g)
 
 {-
  - picks the next number in the chain based off of probability
 -}
-next :: (Ord a, R.RandomGen g) => a -> P.ProbabilityMap a -> g -> (a, g)
-next a p g = P.pick a p g
+next :: (Ord a, Random.RandomGen g) => a -> ProbabilityMap.ProbabilityMap a -> g -> (a, g)
+next a p g = ProbabilityMap.pick a p g
 
 {-
  - Picks random starting seed given a list list
 -}
-startListList :: (Ord a, R.RandomGen g) => [[a]] -> g -> (a, g)
+startListList :: (Ord a, Random.RandomGen g) => [[a]] -> g -> (a, g)
 startListList lst gen = let s = (foldr (++) [] lst) in start s gen
 
 {-
  - Picks a random starting seed
 -}
-start :: (Ord a, R.RandomGen g) => [a] -> g -> (a, g)
-start lst gen = let (a, g) = R.randomR (0, (length lst) - 1) gen in (lst !! a, g)
+start :: (Ord a, Random.RandomGen g) => [a] -> g -> (a, g)
+start lst gen = let (a, g) = Random.randomR (0, (length lst) - 1) gen in (lst !! a, g)

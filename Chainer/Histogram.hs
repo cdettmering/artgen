@@ -21,16 +21,16 @@ Authors:
 -}
 
 module Chainer.Histogram where
-import qualified Data.Map as M
+import qualified Data.Map as Map
 
 -- Maps an element to the number of occurrences of that element.
-type Histogram a = M.Map a Integer
+type Histogram a = Map.Map a Integer
 
 {-
  - Creates an empty Histogram
 -}
 empty :: Histogram a
-empty = M.empty :: M.Map a Integer
+empty = Map.empty :: Map.Map a Integer
 
 {-
  - Creates a Histogram from a list
@@ -42,35 +42,35 @@ fromList lst = foldr (\x acc -> add x acc) empty lst
  - Merges 2 Histograms together adding their occurrences
 -}
 merge :: Ord a => Histogram a -> Histogram a -> Histogram a
-merge h1 h2 = M.unionWith (+) h1 h2
+merge h1 h2 = Map.unionWith (+) h1 h2
 
 {-
  - Adds a value to the Histogram, or adjust the value
  - +1 if it already exists in the Histogram
 -}
 add :: Ord a => a -> Histogram a -> Histogram a
-add a h = adjustOrInsert (\x -> x + 1) a h
+add value histogram = adjustOrInsert (\x -> x + 1) value histogram
 
 {-
- - Gets the number of occurrences of the element k within
+ - Gets the number of occurrences of the element within
  - the Histogram
 -}
 occurrences :: Ord k => k -> Histogram k -> Integer
-occurrences k h = case (M.lookup k h) of
-                        Just found -> found
-                        Nothing -> 0
+occurrences element histogram = case (Map.lookup element histogram) of
+                                    Just found -> found
+                                    Nothing -> 0
 
 {-
  - Total sum of all Histogram occurrences
 -}
 sumOccurrences :: Histogram a -> Integer
-sumOccurrences h = M.fold (+) 0 h
+sumOccurrences histogram = Map.fold (+) 0 histogram
 
 {-
- - Inserts k into the Histogram if it doesn't exist, otherwise adjusts
- - the value of k by applying f to it.
+ - Inserts element into the Histogram if it doesn't exist, otherwise adjusts
+ - the value of element by applying f to it.
 -}
 adjustOrInsert :: Ord k => (Integer -> Integer) -> k -> Histogram k -> Histogram k
-adjustOrInsert f k h = case (M.lookup k h) of
-                           Just found -> M.adjust f k h
-                           Nothing -> M.insert k (f 0) h
+adjustOrInsert f element histogram = case (Map.lookup element histogram) of
+                                         Just found -> Map.adjust f element histogram
+                                         Nothing -> Map.insert element (f 0) histogram

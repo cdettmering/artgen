@@ -21,56 +21,56 @@ Authors:
 -}
 
 module Chainer.ProbabilityMap where
-import qualified Chainer.Probability as P
-import qualified Chainer.HistogramMap as H
-import qualified Data.Map as M
-import qualified Data.Maybe as J  
-import qualified System.Random as R
+import qualified Chainer.Probability as Probability
+import qualified Chainer.HistogramMap as HistogramMap
+import qualified Data.Map as Map
+import qualified Data.Maybe as Maybe
+import qualified System.Random as Random
 
-type ProbabilityMap a = M.Map a (P.Probability a)
+type ProbabilityMap a = Map.Map a (Probability.Probability a)
 
 {-
  - Creates an empty ProbabilityMap
 -}
 empty :: ProbabilityMap a
-empty = M.empty :: M.Map a (P.Probability a)
+empty = Map.empty :: Map.Map a (Probability.Probability a)
 
 {-
  - Creates a ProbabilityMap from a list
 -}
 fromList :: Ord a => [a] -> ProbabilityMap a
-fromList lst = fromHistogramMap (H.fromList lst)
+fromList lst = fromHistogramMap (HistogramMap.fromList lst)
 
 {-
  - Creates a ProbabilityMap from a HistogramMap
 -}
-fromHistogramMap :: Ord a => H.HistogramMap a -> ProbabilityMap a
-fromHistogramMap h = foldr (\hKey hAcc -> (let histogram = H.histogram hKey  h in 
-                                              let probability = P.fromHistogram histogram in
-                                                  adjustOrInsert (\p -> P.add hKey histogram probability) hKey hAcc)) empty (M.keys h)
+fromHistogramMap :: Ord a => HistogramMap.HistogramMap a -> ProbabilityMap a
+fromHistogramMap h = foldr (\hKey hAcc -> (let histogram = HistogramMap.histogram hKey  h in 
+                                              let probability = Probability.fromHistogram histogram in
+                                                  adjustOrInsert (\p -> Probability.add hKey histogram probability) hKey hAcc)) empty (Map.keys h)
 
 {-
  - Merges 2 ProbabilityMap's together
 -}
 merge :: Ord a => ProbabilityMap a -> ProbabilityMap a -> ProbabilityMap a
-merge p1 p2 = M.unionWith (\x1 x2 -> P.merge x1 x2) p1 p2
+merge p1 p2 = Map.unionWith (\x1 x2 -> Probability.merge x1 x2) p1 p2
                              
 {-
  - Inserts k into the ProbabilityMap if it doesn't exist, otherwise adjusts
  - the value of k by applying f to it.
 -}
-adjustOrInsert :: Ord k => (P.Probability k -> P.Probability k) -> k -> ProbabilityMap k -> ProbabilityMap k
-adjustOrInsert f k p = case (M.lookup k p) of
-                           Just found -> M.adjust f k p
-                           Nothing -> M.insert k (f P.empty) p
+adjustOrInsert :: Ord k => (Probability.Probability k -> Probability.Probability k) -> k -> ProbabilityMap k -> ProbabilityMap k
+adjustOrInsert f k p = case (Map.lookup k p) of
+                           Just found -> Map.adjust f k p
+                           Nothing -> Map.insert k (f Probability.empty) p
 
 {-
  - Picks the successor of a based off of the ProbabilityMap. If
  - a is not found in the probability map then a random successor
  - will be chosen.
 -}
-pick :: (Ord a, R.RandomGen g) => a -> ProbabilityMap a -> g -> (a, g)
-pick a p  g = case (M.lookup a p) of
-                 Just x -> (P.pick x g)
+pick :: (Ord a, Random.RandomGen g) => a -> ProbabilityMap a -> g -> (a, g)
+pick a p  g = case (Map.lookup a p) of
+                 Just x -> (Probability.pick x g)
                  -- Picks a random element from the probability map
-                 Nothing -> (P.pick (J.fromJust(M.lookup (head (M.keys p)) p)) g)
+                 Nothing -> (Probability.pick (Maybe.fromJust(Map.lookup (head (Map.keys p)) p)) g)

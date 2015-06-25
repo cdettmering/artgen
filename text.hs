@@ -23,7 +23,7 @@ Authors:
 {-
  - This is an example of what the Chainer module can do. This program
  - generates statistically similar text to the one provided. Try running
- - it on your favorite plain text books from project gutenberg!
+ - it on your favorite plain text books from project gutenberg
 -}
 import qualified Data.Char as CH
 import qualified Data.Text as T
@@ -56,7 +56,6 @@ isPunctuation c = c == '.' ||
                   c == ',' ||
                   c == ';' ||
                   c == ':' ||
-                  c == '!' ||
                   c == '?' ||
                   c == '\"' ||
                   c == '\''
@@ -112,25 +111,25 @@ main = do
            (input:output:args) <- E.getArgs
 
            -- Get all directory contents filter . and ..
-           !d <- fmap (filter (\x -> not (x == "." || x == ".."))) (D.getDirectoryContents input)
+           d <- fmap (filter (\x -> not (x == "." || x == ".."))) (D.getDirectoryContents input)
 
            -- Append input directory with contents
-           let !files = map (input ++) d
+           let files = map (input ++) d
 
            -- Read each file
-           !tList <- mapM readFile files
+           tList <- mapM readFile files
 
            -- Pack into text, strip out leading and trailing whitespace, and then filter out non printable characters
-           let !t = map (filterSpecial . filterNonPrintable . T.strip . T.pack) tList
+           let t = map (filterSpecial . filterNonPrintable . T.strip . T.pack) tList
 
            -- Split into words
-           let !words = foldr (\x acc -> ((filterAllCaps . separatePunctuation . T.words) x) : acc) [[]] t
+           let words = foldr (\x acc -> ((filterAllCaps . separatePunctuation . T.words) x) : acc) [[]] t
 
            -- Run the chain algorithm
-           !chain <- C.fromListListIO words
+           chain <- C.fromListListIO words
 
            -- Merge back into a single string
-           let !finalText = (T.unpack . T.unwords . (addNewLines 0 15)) chain
+           let finalText = (T.unpack . T.unwords . (addNewLines 0 15)) chain
 
            -- Output to file
            writeFile output finalText

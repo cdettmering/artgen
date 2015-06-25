@@ -21,69 +21,65 @@ Authors:
 -}
 
 module Chainer.Probability where
-import qualified Chainer.HistogramMap as HM
-import qualified Chainer.Histogram as H
-import qualified Data.Map as M
-import System.Random as R
-import System.IO.Unsafe as X
+import qualified Chainer.HistogramMap as HistogramMap
+import qualified Chainer.Histogram as Histogram
+import qualified Data.Map as Map
+import System.Random as Random
 
 -- Maps an element to the probability of that element occurring next.
-type Probability a = M.Map a Float
-
--- Lower and upper probability bounds
-data Bounded a = Bounded {ord :: a, lower :: Float, upper :: Float}
+type Probability a = Map.Map a Float
 
 {-
  - Creates an empty Probability
 -}
 empty :: Probability a
-empty = M.empty :: M.Map a Float
+empty = Map.empty :: Map.Map a Float
 
 {-
  - Creates a Probability from a Histogram
 -}
-fromHistogram :: Ord a => H.Histogram a -> Probability a
-fromHistogram h = foldr (\x acc -> add x h acc) empty (M.keys h)
+fromHistogram :: Ord a => Histogram.Histogram a -> Probability a
+fromHistogram histogram = foldr (\element acc -> add element histogram acc) empty (Map.keys histogram)
 
 {-
  - Merges 2 Probability's together
 -}
 merge :: Ord a => Probability a -> Probability a -> Probability a
-merge p1 p2 = M.unionWith (+) p1 p2
+merge p1 p2 = Map.unionWith (+) p1 p2
 
 {-
- - Adds a value to the Probability, or adjust the value
+ - Adds value to the Probability, or adjust the value
  - if it already exists in the Probability
 -}
-add :: Ord a => a -> H.Histogram a -> Probability a -> Probability a
-add a h p = adjustOrInsert (\x -> calculate a h) a p
+add :: Ord a => a -> Histogram.Histogram a -> Probability a -> Probability a
+add value histogram probability = adjustOrInsert (\element -> calculate value histogram) value probability
 
 {-
- - Inserts k into the Probability if it doesn't exist, otherwise adjusts
- - the value of k by applying f to it. Automatically drops 0 probabilities.
+ - Inserts value into the Probability if it doesn't exist, otherwise adjusts
+ - the value of value by applying f to it. Automatically drops 0 probabilities.
 -}
 adjustOrInsert :: Ord k => (Float -> Float) -> k -> Probability k -> Probability k
-adjustOrInsert f k p = case (M.lookup k p) of
-                           Just found -> M.adjust f k p
+adjustOrInsert f value probability = case (Map.lookup value probability) of
+                           Just found -> Map.adjust f value probability
                            -- Don't include 0 probability
-                           Nothing -> let probability = (f 0) in if probability /= 0 then M.insert k (f 0) p else p
+                           Nothing -> let prob = (f 0) in if prob /= 0 then Map.insert value (f 0) probability else probability
 
 {-
- - Calculates the probability of a occurring based off of the number of occurrences
- - of a in the Histogram.
+ - Calculates the probability of element occurring based off of the number of occurrences
+ - of element in the Histogram.
 -}
-calculate :: Ord a => a -> H.Histogram a -> Float
-calculate a h = case (H.sumOccurrences h) of
-                    0 -> 0
-                    x -> (fromInteger (H.occurrences a h)) / (fromInteger x)
+calculate :: Ord a => a -> Histogram.Histogram a -> Float
+calculate element histogram = case (Histogram.sumOccurrences histogram) of
+                                  0 -> 0
+                                  x -> (fromInteger (Histogram.occurrences element histogram)) / (fromInteger x)
 
 {-
- - Gets the probability of a occurring from the Probability
+ - Gets the probability of element occurring from the Probability
 -}
 probability :: Ord a => a -> Probability a -> Float
-probability a p = case (M.lookup a p) of
-                      Just prob -> prob
-                      Nothing -> 0
+probability element probability = case (Map.lookup element probability) of
+                                      Just prob -> prob
+                                      Nothing -> 0
 
 {-
  - Pads the list out to the length given using the last element in the
@@ -97,20 +93,20 @@ padList size lst = lst ++ (take (size - (length lst)) (cycle [last lst]))
  - pick for a more detailed explanation.
 -}
 pickList :: Ord a => Probability a -> [a]
-pickList p = padList 500 (foldr (\x acc -> (pickSubList x (probability x p)) ++ acc) [] (M.keys p))
+pickList p = padList 500 (foldr (\x acc -> (pickSubList x (probability x p)) ++ acc) [] (Map.keys p))
 
 {-
  - Generates a pick sub list for a specific element. These sub lists are then
  - concat'd together to create the final list.
 -}
 pickSubList :: a -> Float -> [a]
-pickSubList a p = let numElements = (floor (p * 500)) in take numElements (cycle [a])
+pickSubList element probability = let numElements = (floor (probability * 500)) in take numElements (cycle [element])
 
 {-
  - Picks a random element from the list
 -}
-pickFromList :: R.RandomGen g => [a] -> g -> (a, g)
-pickFromList lst gen  = let (a, g) = R.randomR (0, 499) gen in (lst !! a, g)
+pickFromList :: Random.RandomGen g => [a] -> g -> (a, g)
+pickFromList lst gen  = let (a, g) = Random.randomR (0, 499) gen in (lst !! a, g)
 
 {-
  - Picks a random value from the Probability based off of each values
@@ -123,5 +119,5 @@ pickFromList lst gen  = let (a, g) = R.randomR (0, 499) gen in (lst !! a, g)
  - then the pick list will contain 50 1's, 75 2's and 375 3's. This support a
  - probability resolution down to .03%
 -}
-pick :: (Ord a, R.RandomGen g) => Probability a -> g -> (a, g)
+pick :: (Ord a, Random.RandomGen g) => Probability a -> g -> (a, g)
 pick p g = pickFromList (pickList p) g

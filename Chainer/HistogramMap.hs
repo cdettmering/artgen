@@ -21,18 +21,18 @@ Authors:
 -}
 
 module Chainer.HistogramMap where
-import qualified Chainer.Histogram as H
-import qualified Data.Map as M
+import qualified Chainer.Histogram as Histogram
+import qualified Data.Map as Map
 
 -- Maps an element to its successor histogram, where a successor histogram
 -- is the histogram of the element that follows the current element.
-type HistogramMap a = M.Map a (H.Histogram a)
+type HistogramMap a = Map.Map a (Histogram.Histogram a)
 
 {-
  - Creates an empty HistogramMap
 -}
 empty :: HistogramMap a
-empty = M.empty :: M.Map a (H.Histogram a)
+empty = Map.empty :: Map.Map a (Histogram.Histogram a)
 
 {-
  - Creates a HistogramMap from a list
@@ -40,28 +40,28 @@ empty = M.empty :: M.Map a (H.Histogram a)
 fromList :: Ord a => [a] -> HistogramMap a
 fromList [] = empty
 fromList (x:[]) = empty
-fromList (x:y:z) = adjustOrInsert (\h -> H.add y h) x (fromList (y:z))
+fromList (x:y:z) = adjustOrInsert (\h -> Histogram.add y h) x (fromList (y:z))
 
 {-
  - Merges 2 HistogramMaps together
 -}
 merge :: Ord a => HistogramMap a -> HistogramMap a -> HistogramMap a
-merge h1 h2 = M.unionWith (\x1 x2 -> H.merge x1 x2) h1 h2
+merge histogram1 histogram2 = Map.unionWith (\element1 element2 -> Histogram.merge element1 element2) histogram1 histogram2
 
 {-
- - Inserts k into the HistogramMap if it doesn't exist, otherwise adjusts
- - the value of k by applying f to it.
+ - Inserts element into the HistogramMap if it doesn't exist, otherwise adjusts
+ - the value of element by applying f to it.
 -}
-adjustOrInsert :: Ord k => (H.Histogram k -> H.Histogram k) -> k -> HistogramMap k -> HistogramMap k
-adjustOrInsert f k h = case (M.lookup k h) of
-                           Just found -> M.adjust f k h
-                           Nothing -> M.insert k (f H.empty) h
+adjustOrInsert :: Ord k => (Histogram.Histogram k -> Histogram.Histogram k) -> k -> HistogramMap k -> HistogramMap k
+adjustOrInsert f element histogram = case (Map.lookup element histogram) of
+                                         Just found -> Map.adjust f element histogram
+                                         Nothing -> Map.insert element (f Histogram.empty) histogram
 
 {-
- - Gets the Histogram for the key a, otherwise returns an empty
- - Histogram is k doesn't exist.
+ - Gets the Histogram for the key, otherwise returns an empty
+ - Histogram if key doesn't exist.
 -}
-histogram :: Ord a => a -> HistogramMap a -> H.Histogram a
-histogram a h = case (M.lookup a h) of
-                    Just found -> found
-                    Nothing -> H.empty
+histogram :: Ord a => a -> HistogramMap a -> Histogram.Histogram a
+histogram key histogram = case (Map.lookup key histogram) of
+                              Just found -> found
+                              Nothing -> Histogram.empty
