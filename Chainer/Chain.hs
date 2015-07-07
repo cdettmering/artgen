@@ -23,6 +23,8 @@ Authors:
 module Chainer.Chain where
 import qualified Chainer.ProbabilityMap as ProbabilityMap
 import qualified System.Random as Random
+import Data.List (foldl')
+
 
 {-
  - Gives back a Marchov Chained list generated from the source list
@@ -40,7 +42,7 @@ fromListIO lst = do
  - be supplied
 -}
 fromList :: (Ord a, Random.RandomGen g) => [a] -> a -> g -> [a]
-fromList lst s g = let p = (ProbabilityMap.fromList lst) in take (length lst) (chain s p g)
+fromList lst s g = let p = (ProbabilityMap.fromListPM lst) in take (length lst) (chain s p g)
 
 {-
  - Gives back a Marchov Chained list generated form the source list list.
@@ -58,10 +60,11 @@ fromListListIO lst = do
  - Takes in multiple inputs and merges them together into 1 chained output
 -}
 fromListList :: (Ord a, Random.RandomGen g) => [[a]] -> a -> g -> [a]
-fromListList lst s g = let p = (foldr (\x acc -> ProbabilityMap.merge (ProbabilityMap.fromList x) acc) ProbabilityMap.empty lst) in take (averageLength lst) (chain s p g)
+fromListList lst s g = let p = (foldl' (\acc x -> ProbabilityMap.mergePM (ProbabilityMap.fromListPM x) acc) ProbabilityMap.emptyPM lst) 
+  in take (averageLength lst) (chain s p g)
 
 sumLength :: [[a]] -> Int
-sumLength lst = foldr (\x acc -> (length x) + acc) 0 lst
+sumLength lst = foldl' (\acc x -> (length x) + acc) 0 lst
 
 averageLength :: [[a]] -> Int
 averageLength lst = quot (sumLength lst) (length lst)
@@ -77,13 +80,13 @@ chain seed p gen =  let (a, g) = (next seed p gen) in seed : (chain a p g)
  - picks the next number in the chain based off of probability
 -}
 next :: (Ord a, Random.RandomGen g) => a -> ProbabilityMap.ProbabilityMap a -> g -> (a, g)
-next a p g = ProbabilityMap.pick a p g
+next a p g = ProbabilityMap.pickPM a p g
 
 {-
  - Picks random starting seed given a list list
 -}
 startListList :: (Ord a, Random.RandomGen g) => [[a]] -> g -> (a, g)
-startListList lst gen = let s = (foldr (++) [] lst) in start s gen
+startListList lst gen = let s = (foldl' (++) [] lst) in start s gen
 
 {-
  - Picks a random starting seed

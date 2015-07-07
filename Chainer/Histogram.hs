@@ -21,7 +21,7 @@ Authors:
 -}
 
 module Chainer.Histogram where
-import qualified Data.Map as Map
+import qualified Data.Map.Strict as Mapimport Data.List (foldl')
 
 -- Maps an element to the number of occurrences of that element.
 type Histogram a = Map.Map a Integer
@@ -29,27 +29,27 @@ type Histogram a = Map.Map a Integer
 {-
  - Creates an empty Histogram
 -}
-empty :: Histogram a
-empty = Map.empty :: Map.Map a Integer
+emptyH :: Histogram a
+emptyH = Map.empty :: Map.Map a Integer
 
 {-
  - Creates a Histogram from a list
 -}
-fromList :: Ord a => [a] -> Histogram a
-fromList lst = foldr (\x acc -> add x acc) empty lst
+fromListH :: Ord a => [a] -> Histogram a
+fromListH lst = foldl' (\acc x -> addH x acc) emptyH lst
 
 {-
- - Merges 2 Histograms together adding their occurrences
+ - merges 2 Histograms together addHing their occurrences
 -}
-merge :: Ord a => Histogram a -> Histogram a -> Histogram a
-merge h1 h2 = Map.unionWith (+) h1 h2
+mergeH :: Ord a => Histogram a -> Histogram a -> Histogram a
+mergeH h1 h2 = Map.unionWith (+) h1 h2
 
 {-
- - Adds a value to the Histogram, or adjust the value
+ - addHs a value to the Histogram, or adjust the value
  - +1 if it already exists in the Histogram
 -}
-add :: Ord a => a -> Histogram a -> Histogram a
-add value histogram = adjustOrInsert (\x -> x + 1) value histogram
+addH :: Ord a => a -> Histogram a -> Histogram a
+addH value histogram = adjustOrInsertH (\x -> x + 1) value histogram
 
 {-
  - Gets the number of occurrences of the element within
@@ -64,13 +64,13 @@ occurrences element histogram = case (Map.lookup element histogram) of
  - Total sum of all Histogram occurrences
 -}
 sumOccurrences :: Histogram a -> Integer
-sumOccurrences histogram = Map.fold (+) 0 histogram
+sumOccurrences histogram = Map.foldl' (+) 0 histogram
 
 {-
  - Inserts element into the Histogram if it doesn't exist, otherwise adjusts
  - the value of element by applying f to it.
 -}
-adjustOrInsert :: Ord k => (Integer -> Integer) -> k -> Histogram k -> Histogram k
-adjustOrInsert f element histogram = case (Map.lookup element histogram) of
+adjustOrInsertH :: Ord k => (Integer -> Integer) -> k -> Histogram k -> Histogram k
+adjustOrInsertH f element histogram = case (Map.lookup element histogram) of
                                          Just found -> Map.adjust f element histogram
                                          Nothing -> Map.insert element (f 0) histogram
