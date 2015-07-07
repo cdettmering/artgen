@@ -1,0 +1,12 @@
+Name: artgen
+License: GPL-3
+Version: 0.1
+Cabal-Version: >=1.10
+build-type: Simple
+executable text
+  main-is: Text.hs
+  build-depends: text, base, containers, directory, random
+  ghc-options: -fprof-auto -rtsopts
+  default-language: Haskell2010
+  default-extensions: BangPatterns
+  

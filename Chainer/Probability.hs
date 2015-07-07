@@ -23,8 +23,10 @@ Authors:
 module Chainer.Probability where
 import qualified Chainer.HistogramMap as HistogramMap
 import qualified Chainer.Histogram as Histogram
-import qualified Data.Map as Map
+import qualified Data.Map.Strict as Map
 import System.Random as Random
+import Data.List (foldl')
+
 
 -- Maps an element to the probability of that element occurring next.
 type Probability a = Map.Map a Float
@@ -32,34 +34,34 @@ type Probability a = Map.Map a Float
 {-
  - Creates an empty Probability
 -}
-empty :: Probability a
-empty = Map.empty :: Map.Map a Float
+emptyP :: Probability a
+emptyP = Map.empty :: Map.Map a Float
 
 {-
  - Creates a Probability from a Histogram
 -}
 fromHistogram :: Ord a => Histogram.Histogram a -> Probability a
-fromHistogram histogram = foldr (\element acc -> add element histogram acc) empty (Map.keys histogram)
+fromHistogram histogram = foldl' (\acc element -> addP element histogram acc) emptyP (Map.keys histogram)
 
 {-
  - Merges 2 Probability's together
 -}
-merge :: Ord a => Probability a -> Probability a -> Probability a
-merge p1 p2 = Map.unionWith (+) p1 p2
+mergeP :: Ord a => Probability a -> Probability a -> Probability a
+mergeP p1 p2 = Map.unionWith (+) p1 p2
 
 {-
  - Adds value to the Probability, or adjust the value
  - if it already exists in the Probability
 -}
-add :: Ord a => a -> Histogram.Histogram a -> Probability a -> Probability a
-add value histogram probability = adjustOrInsert (\element -> calculate value histogram) value probability
+addP :: Ord a => a -> Histogram.Histogram a -> Probability a -> Probability a
+addP value histogram probability = adjustOrInsertP (\element -> calculate value histogram) value probability
 
 {-
  - Inserts value into the Probability if it doesn't exist, otherwise adjusts
  - the value of value by applying f to it. Automatically drops 0 probabilities.
 -}
-adjustOrInsert :: Ord k => (Float -> Float) -> k -> Probability k -> Probability k
-adjustOrInsert f value probability = case (Map.lookup value probability) of
+adjustOrInsertP :: Ord k => (Float -> Float) -> k -> Probability k -> Probability k
+adjustOrInsertP f value probability = case (Map.lookup value probability) of
                            Just found -> Map.adjust f value probability
                            -- Don't include 0 probability
                            Nothing -> let prob = (f 0) in if prob /= 0 then Map.insert value (f 0) probability else probability
@@ -93,7 +95,7 @@ padList size lst = lst ++ (take (size - (length lst)) (cycle [last lst]))
  - pick for a more detailed explanation.
 -}
 pickList :: Ord a => Probability a -> [a]
-pickList p = padList 500 (foldr (\x acc -> (pickSubList x (probability x p)) ++ acc) [] (Map.keys p))
+pickList p = padList 500 (foldl' (\acc x -> (pickSubList x (probability x p)) ++ acc) [] (Map.keys p))
 
 {-
  - Generates a pick sub list for a specific element. These sub lists are then
