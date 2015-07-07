@@ -39,7 +39,7 @@ fromListH :: Ord a => [a] -> Histogram a
 fromListH lst = foldl' (\acc x -> addH x acc) emptyH lst
 
 {-
- - merges 2 Histograms together addHing their occurrences
+ - merges 2 Histograms together adding their occurrences
 -}
 mergeH :: Ord a => Histogram a -> Histogram a -> Histogram a
 mergeH h1 h2 = Map.unionWith (+) h1 h2
