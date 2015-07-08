@@ -21,7 +21,8 @@ Authors:
 -}
 
 module Chainer.Histogram where
-import qualified Data.Map.Strict as Mapimport Data.List (foldl')
+import qualified Data.Map.Strict as Map
+import Data.List (foldl')
 
 -- Maps an element to the number of occurrences of that element.
 type Histogram a = Map.Map a Integer
@@ -39,7 +40,7 @@ fromListH :: Ord a => [a] -> Histogram a
 fromListH lst = foldl' (\acc x -> addH x acc) emptyH lst
 
 {-
- - merges 2 Histograms together adding their occurrences
+ - Merges 2 Histograms together adding their occurrences
 -}
 mergeH :: Ord a => Histogram a -> Histogram a -> Histogram a
 mergeH h1 h2 = Map.unionWith (+) h1 h2
